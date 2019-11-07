@@ -1,0 +1,5 @@
+#!/bin/bash
+# build.sh
+
+gcc main.c -g -o fontviewer `pkg-config --cflags --libs gtk+-2.0` -I/usr/include/fontconfig
+
