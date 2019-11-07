@@ -1,10 +1,13 @@
 #include <gtk/gtk.h>
 #include <fontconfig.h>
 #include <cairo.h>
- 
+#include <freetype/ftbitmap.h>
+#include <pango/pangocairo.h>
+#include <pango/pangoft2.h> 
  
 #define CANVAS_WIDTH  640
 #define CANVAS_HEIGHT 480
+#define OFFSET  50
 
 #define LABEL_TEXT  "Click the button to change the font."
 
@@ -57,6 +60,151 @@ gboolean on_expose_event(GtkWidget *widget,
   cairo_destroy(cr);
 
   return FALSE;
+}
+
+gboolean on_expose_event2(GtkWidget *widget,
+    GdkEventExpose *event,   gpointer data) 
+{
+	cairo_surface_t* surf = NULL;
+	cairo_t* cr = NULL;
+	cairo_status_t status;
+	PangoContext* context = NULL;
+	PangoLayout* layout = NULL;
+	PangoFontDescription* font_desc = NULL;
+	PangoFontMap* font_map = NULL;
+	FT_Bitmap bmp = {0};
+ 
+	int stride = 0;
+	int width = CANVAS_WIDTH;
+	int height = CANVAS_HEIGHT - OFFSET;
+	
+	GdkPixbuf *pixbuf;
+	GError *err = NULL;
+    cairo_t *cr2;
+        
+	/* ------------------------------------------------------------ */
+	/*                   I N I T I A L I Z E                        */
+	/* ------------------------------------------------------------ */
+
+	/* FT buffer */
+	FT_Bitmap_New(&bmp);
+	bmp.rows = height;
+	bmp.width = width;
+	bmp.buffer = (unsigned char*)calloc(bmp.rows * bmp.width, 1);
+	if (NULL == bmp.buffer) {
+		printf("+ error: cannot allocate the buffer for the output bitmap.\n");
+		exit(EXIT_FAILURE);
+	}
+ 
+	/* create our "canvas" */
+	bmp.pitch = (width + 3) & -4;
+	bmp.pixel_mode = FT_PIXEL_MODE_GRAY; /*< Grayscale*/
+	bmp.num_grays = 256;
+	stride = cairo_format_stride_for_width(CAIRO_FORMAT_A8, width);
+	surf = cairo_image_surface_create_for_data(bmp.buffer, CAIRO_FORMAT_A8, width, height, stride);
+ 
+	if (CAIRO_STATUS_SUCCESS != cairo_surface_status(surf)) {
+		printf("+ error: couldn't create the surface.\n");
+		exit(EXIT_FAILURE);
+	}
+ 
+	/* create our cairo context object that tracks state. */
+	cr = cairo_create(surf);
+	if (CAIRO_STATUS_NO_MEMORY == cairo_status(cr)) {
+		printf("+ error: out of memory, cannot create cairo_t*\n");
+		exit(EXIT_FAILURE);
+	}
+ 
+	/* ------------------------------------------------------------ */
+	/*               D R A W   I N T O  C A N V A S                 */
+	/* ------------------------------------------------------------ */
+ 
+	font_map = pango_ft2_font_map_new();
+	if (NULL == font_map) {
+		printf("+ error: cannot create the pango font map.\n");
+		exit(EXIT_FAILURE);
+	}
+ 
+	context = pango_font_map_create_context(font_map);
+	if (NULL == context) {
+		printf("+ error: cannot create pango font context.\n");
+		exit(EXIT_FAILURE);
+	}
+ 
+	/* create layout object. */
+	layout = pango_layout_new(context);
+	if (NULL == layout) {
+		printf("+ error: cannot create the pango layout.\n");
+		exit(EXIT_FAILURE);
+	}
+ 
+	/* create the font description @todo the reference does not tell how/when to free this */
+	font_desc = pango_font_description_from_string("Station 35");
+	pango_layout_set_font_description(layout, font_desc);
+	pango_font_map_load_font(font_map, context, font_desc);
+	pango_font_description_free(font_desc);
+
+	/* set the width around which pango will wrap */
+	pango_layout_set_width(layout, 150 * PANGO_SCALE);
+ 
+	/* write using the markup feature */
+	const gchar* text = ""
+    "<span foreground=\"blue\" font_family=\"Station\">"
+    "   <b> bold </b>"
+    "   <u> is </u>"
+    "   <i> nice </i>"
+    "</span>"
+    "<tt> hello </tt>"
+    "<span font_family=\"sans\" font_stretch=\"ultracondensed\" letter_spacing=\"500\" font_weight=\"light\"> SANS</span>"
+    "<span foreground=\"#FFCC00\"> colored</span>"
+    "";
+ 
+//  gchar* plaintext ;
+//  PangoAttrList* attr_list;
+	pango_layout_set_markup(layout, text, -1);
+ 
+	/* render */
+	pango_ft2_render_layout(&bmp, layout, 20, 0);
+	pango_cairo_update_layout(cr, layout);
+ 
+	/* ------------------------------------------------------------ */
+	/*               O U T P U T  A N D  C L E A N U P              */
+	/* ------------------------------------------------------------ */
+
+	/* write to png */
+	status = cairo_surface_write_to_png(surf, "test_font.png");
+	if (CAIRO_STATUS_SUCCESS != status) {
+		printf("+ error: couldn't write to png\n");
+		exit(EXIT_FAILURE);
+	}
+
+	////////////////////////////////////////////////// Output to GtkWidget ///////////////////////////////////////////////////////
+	pixbuf = gdk_pixbuf_new_from_file("test_font.png", &err);
+    if(err)
+    {
+        printf("Error : %s\n", err->message);
+        g_error_free(err);
+        return FALSE;
+    }
+    cr2 = gdk_cairo_create (gtk_widget_get_window(widget));
+    //    cr = gdk_cairo_create (da->window);
+    gdk_cairo_set_source_pixbuf(cr2, pixbuf, 0, 0);
+    cairo_paint(cr2);
+    //    cairo_fill (cr);
+    cairo_destroy (cr2);
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	
+
+	cairo_surface_destroy(surf);
+	cairo_destroy(cr);
+
+	g_object_unref(layout);
+	g_object_unref(font_map);
+	g_object_unref(context);
+
+
+
+	return FALSE;
 }
 
 gboolean time_handler(GtkWidget *widget) {
@@ -195,13 +343,13 @@ int main( int   argc,char *argv[] )
 
    dataarea = gtk_drawing_area_new();
    gtk_fixed_put(GTK_FIXED(fixed), dataarea, CANVAS_WIDTH / 2, -10);
-   gtk_widget_set_size_request(dataarea, CANVAS_WIDTH / 2, CANVAS_HEIGHT - 35);
+   gtk_widget_set_size_request(dataarea, CANVAS_WIDTH / 2, CANVAS_HEIGHT - OFFSET);
    g_signal_connect(dataarea, "expose-event", G_CALLBACK(on_expose_event), NULL);
 
    dataarea2 = gtk_drawing_area_new();
    gtk_fixed_put(GTK_FIXED(fixed), dataarea2, 0, 40);
-   gtk_widget_set_size_request(dataarea2, CANVAS_WIDTH, CANVAS_HEIGHT - 35);
-   g_signal_connect(dataarea2, "expose-event", G_CALLBACK(on_expose_event), NULL);
+   gtk_widget_set_size_request(dataarea2, CANVAS_WIDTH, CANVAS_HEIGHT - OFFSET);
+   g_signal_connect(dataarea2, "expose-event", G_CALLBACK(on_expose_event2), NULL);
    
    
    gtk_container_add(GTK_CONTAINER(window), fixed);
