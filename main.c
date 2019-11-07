@@ -11,6 +11,8 @@
 
 #define LABEL_TEXT  "Click the button to change the font."
 
+#define USE_MARKUP   0
+
 gchar buf[256];
 PangoFontDescription  *g_font_desc = NULL;
  
@@ -24,7 +26,7 @@ gboolean on_expose_event(GtkWidget *widget,
     gpointer data) {
         
   cairo_t *cr;
-  gint size = 12;
+  gint size = 20;
   const char * family = "Sans";
   cairo_font_slant_t slant = CAIRO_FONT_SLANT_NORMAL;
   cairo_font_weight_t weight = CAIRO_FONT_WEIGHT_NORMAL;
@@ -138,15 +140,16 @@ gboolean on_expose_event2(GtkWidget *widget,
 		exit(EXIT_FAILURE);
 	}
  
-	/* create the font description @todo the reference does not tell how/when to free this */
-	font_desc = pango_font_description_from_string("Station 35");
+	/* set the width around which pango will wrap */
+	pango_layout_set_width(layout, (CANVAS_WIDTH - OFFSET) * PANGO_SCALE);
+ 
+ #if USE_MARKUP
+ 	/* create the font description @todo the reference does not tell how/when to free this */
+	font_desc = pango_font_description_from_string("Sans 20");
 	pango_layout_set_font_description(layout, font_desc);
 	pango_font_map_load_font(font_map, context, font_desc);
 	pango_font_description_free(font_desc);
 
-	/* set the width around which pango will wrap */
-	pango_layout_set_width(layout, 150 * PANGO_SCALE);
- 
 	/* write using the markup feature */
 	const gchar* text = ""
     "<span foreground=\"blue\" font_family=\"Station\">"
@@ -162,6 +165,21 @@ gboolean on_expose_event2(GtkWidget *widget,
 //  gchar* plaintext ;
 //  PangoAttrList* attr_list;
 	pango_layout_set_markup(layout, text, -1);
+	
+#else
+		/* create the font description @todo the reference does not tell how/when to free this */
+	if(g_font_desc)
+		font_desc = g_font_desc;
+	else
+		font_desc = pango_font_description_from_string("Sans 20");
+	pango_layout_set_font_description(layout, font_desc);
+	pango_font_map_load_font(font_map, context, font_desc);
+	if(g_font_desc == NULL)
+		pango_font_description_free(font_desc);
+
+	gchar* plaintext  = "Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World AVWABCDEFGHIJKLMNOPQRSTUVWXYX";
+	pango_layout_set_text(layout, plaintext, -1);
+#endif
  
 	/* render */
 	pango_ft2_render_layout(&bmp, layout, 20, 0);
@@ -322,7 +340,7 @@ int main( int   argc,char *argv[] )
    gtk_window_set_title (GTK_WINDOW (window), "Scala Font Viewer using Pango");
    gtk_window_set_default_size(GTK_WINDOW(window), CANVAS_WIDTH, CANVAS_HEIGHT);
    gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
-   gtk_container_set_border_width(GTK_CONTAINER (window), 20);
+   gtk_container_set_border_width(GTK_CONTAINER (window),  15);
 
    icon = create_pixbuf("scala.png");  
    gtk_window_set_icon(GTK_WINDOW(window), icon);
