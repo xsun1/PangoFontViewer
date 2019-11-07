@@ -160,7 +160,7 @@ int main( int   argc,char *argv[] )
    GtkWidget *fontbutton;
    GdkPixbuf *icon;
    GtkWidget *fixed;
-   GtkWidget *dataarea;
+   GtkWidget *dataarea, *dataarea2;
    GtkWidget *label = gtk_label_new (LABEL_TEXT);
 
    // showfontlist1();
@@ -195,9 +195,16 @@ int main( int   argc,char *argv[] )
 
    dataarea = gtk_drawing_area_new();
    gtk_fixed_put(GTK_FIXED(fixed), dataarea, CANVAS_WIDTH / 2, -10);
-   gtk_widget_set_size_request(dataarea, CANVAS_WIDTH, CANVAS_HEIGHT - 35);
-   gtk_container_add(GTK_CONTAINER(window), fixed);
+   gtk_widget_set_size_request(dataarea, CANVAS_WIDTH / 2, CANVAS_HEIGHT - 35);
    g_signal_connect(dataarea, "expose-event", G_CALLBACK(on_expose_event), NULL);
+
+   dataarea2 = gtk_drawing_area_new();
+   gtk_fixed_put(GTK_FIXED(fixed), dataarea2, 0, 40);
+   gtk_widget_set_size_request(dataarea2, CANVAS_WIDTH, CANVAS_HEIGHT - 35);
+   g_signal_connect(dataarea2, "expose-event", G_CALLBACK(on_expose_event), NULL);
+   
+   
+   gtk_container_add(GTK_CONTAINER(window), fixed);
  
    g_timeout_add(1000, (GSourceFunc) time_handler, (gpointer) window);
    gtk_widget_show_all(window); 
