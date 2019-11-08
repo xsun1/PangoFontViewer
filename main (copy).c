@@ -5,18 +5,14 @@
 #include <pango/pangocairo.h>
 #include <pango/pangoft2.h> 
  
-#define CANVAS_WIDTH  800
-#define CANVAS_HEIGHT 600
-#define OFFSET  45
+#define CANVAS_WIDTH  640
+#define CANVAS_HEIGHT 480
 
 #define LABEL_TEXT  "Click the button to change the font."
 
-#define USE_MARKUP   1
-
 gchar buf[256];
 PangoFontDescription  *g_font_desc = NULL;
-gchar* plaintext  = "Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World AVWABCDEFGHIJKLMNOPQRSTUVWXYX";
-	
+ 
 void destroy( GtkWidget *widget,gpointer   data )
 {
    gtk_main_quit ();
@@ -27,7 +23,7 @@ gboolean on_expose_event(GtkWidget *widget,
     gpointer data) {
         
   cairo_t *cr;
-  gint size = 20;
+  gint size = 12;
   const char * family = "Sans";
   cairo_font_slant_t slant = CAIRO_FONT_SLANT_NORMAL;
   cairo_font_weight_t weight = CAIRO_FONT_WEIGHT_NORMAL;
@@ -57,7 +53,9 @@ gboolean on_expose_event(GtkWidget *widget,
   cairo_move_to(cr, 0, 30);
   cairo_set_font_size(cr, size);
   cairo_select_font_face(cr, family, slant, weight);
+  
   cairo_show_text(cr, buf);
+
   cairo_destroy(cr);
 
   return FALSE;
@@ -77,11 +75,7 @@ gboolean on_expose_event2(GtkWidget *widget,
  
 	int stride = 0;
 	int width = CANVAS_WIDTH;
-	int height = CANVAS_HEIGHT - OFFSET;
-	
-	GdkPixbuf *pixbuf;
-	GError *err = NULL;
-    cairo_t *cr2;
+	int height = CANVAS_HEIGHT;
         
 	/* ------------------------------------------------------------ */
 	/*                   I N I T I A L I Z E                        */
@@ -115,42 +109,50 @@ gboolean on_expose_event2(GtkWidget *widget,
 		printf("+ error: out of memory, cannot create cairo_t*\n");
 		exit(EXIT_FAILURE);
 	}
+	
+	
+	
+  /* create our cairo context object that tracks state. */
+  cr = cairo_create(surf);
+  if (CAIRO_STATUS_NO_MEMORY == cairo_status(cr)) {
+    printf("+ error: out of memory, cannot create cairo_t*\n");
+    exit(EXIT_FAILURE);
+  }
  
-	/* ------------------------------------------------------------ */
-	/*               D R A W   I N T O  C A N V A S                 */
-	/* ------------------------------------------------------------ */
+  /* ------------------------------------------------------------ */
+  /*               D R A W   I N T O  C A N V A S                 */
+  /* ------------------------------------------------------------ */
  
-	font_map = pango_ft2_font_map_new();
-	if (NULL == font_map) {
-		printf("+ error: cannot create the pango font map.\n");
-		exit(EXIT_FAILURE);
-	}
+  font_map = pango_ft2_font_map_new();
+  if (NULL == font_map) {
+    printf("+ error: cannot create the pango font map.\n");
+    exit(EXIT_FAILURE);
+  }
  
-	context = pango_font_map_create_context(font_map);
-	if (NULL == context) {
-		printf("+ error: cannot create pango font context.\n");
-		exit(EXIT_FAILURE);
-	}
+  context = pango_font_map_create_context(font_map);
+  if (NULL == context) {
+    printf("+ error: cannot create pango font context.\n");
+    exit(EXIT_FAILURE);
+  }
  
-	/* create layout object. */
-	layout = pango_layout_new(context);
-	if (NULL == layout) {
-		printf("+ error: cannot create the pango layout.\n");
-		exit(EXIT_FAILURE);
-	}
+  /* create layout object. */
+  layout = pango_layout_new(context);
+  if (NULL == layout) {
+    printf("+ error: cannot create the pango layout.\n");
+    exit(EXIT_FAILURE);
+  }
  
-	/* set the width around which pango will wrap */
-	pango_layout_set_width(layout, (CANVAS_WIDTH - OFFSET) * PANGO_SCALE);
+  /* create the font description @todo the reference does not tell how/when to free this */
+  font_desc = pango_font_description_from_string("Station 35");
+  pango_layout_set_font_description(layout, font_desc);
+  pango_font_map_load_font(font_map, context, font_desc);
+  pango_font_description_free(font_desc);
  
- #if USE_MARKUP
- 	/* create the font description @todo the reference does not tell how/when to free this */
-	font_desc = pango_font_description_from_string("Sans 20");
-	pango_layout_set_font_description(layout, font_desc);
-	pango_font_map_load_font(font_map, context, font_desc);
-	pango_font_description_free(font_desc);
-
-	/* write using the markup feature */
-	const gchar* text = ""
+  /* set the width around which pango will wrap */
+  pango_layout_set_width(layout, 150 * PANGO_SCALE);
+ 
+  /* write using the markup feature */
+  const gchar* text = ""
     "<span foreground=\"blue\" font_family=\"Station\">"
     "   <b> bold </b>"
     "   <u> is </u>"
@@ -163,117 +165,31 @@ gboolean on_expose_event2(GtkWidget *widget,
  
 //  gchar* plaintext ;
 //  PangoAttrList* attr_list;
-	pango_layout_set_markup(layout, text, -1);
-	
-#else
-		/* create the font description @todo the reference does not tell how/when to free this */
-	if(g_font_desc)
-		font_desc = g_font_desc;
-	else
-		font_desc = pango_font_description_from_string("Sans 20");
-	pango_layout_set_font_description(layout, font_desc);
-	pango_font_map_load_font(font_map, context, font_desc);
-	if(g_font_desc == NULL)
-		pango_font_description_free(font_desc);
-
-	pango_layout_set_text(layout, plaintext, -1);
-	
-#endif
+  pango_layout_set_markup(layout, text, -1);
  
-	/* render */
-	pango_ft2_render_layout(&bmp, layout, 20, 0);
-	pango_cairo_update_layout(cr, layout);
+  /* render */
+  pango_ft2_render_layout(&bmp, layout, 30, 100);
+  pango_cairo_update_layout(cr, layout);
  
-	/* ------------------------------------------------------------ */
-	/*               O U T P U T  A N D  C L E A N U P              */
-	/* ------------------------------------------------------------ */
-
-	/* write to png */
-	status = cairo_surface_write_to_png(surf, "test_font.png");
-	if (CAIRO_STATUS_SUCCESS != status) {
-		printf("+ error: couldn't write to png\n");
-		exit(EXIT_FAILURE);
-	}
-
-////////////////////////////////////////////////// Output to GtkWidget ///////////////////////////////////////////////////////
-#if 1	
-	pixbuf = gdk_pixbuf_new_from_file("test_font.png", &err);
-    if(err)
-    {
-        printf("Error : %s\n", err->message);
-        g_error_free(err);
-        return FALSE;
-    }
-    cr2 = gdk_cairo_create (gtk_widget_get_window(widget));
-    //    cr = gdk_cairo_create (da->window);
-    gdk_cairo_set_source_pixbuf(cr2, pixbuf, 0, 0);
-    cairo_paint(cr2);
-    //    cairo_fill (cr);
-    cairo_destroy (cr2);
-#else
-	// copy source surface to dest surface
-	cr2 = gdk_cairo_create (gtk_widget_get_window(widget));
-	cairo_set_source_surface (cr2, surf, 0, 0);
-	cairo_paint (cr2);	
-	cairo_destroy(cr2);
-#endif		
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-	cairo_surface_destroy(surf);
-	cairo_destroy(cr);
-
-	g_object_unref(layout);
-	g_object_unref(font_map);
-	g_object_unref(context);
-
-
-
-	return FALSE;
-}
-
-gboolean on_expose_event3(GtkWidget *widget,
-    GdkEventExpose *event,
-    gpointer data) {
-        
-  cairo_t *cr;
-  gint size = 20;
-  const char * family = "Sans";
-  cairo_font_slant_t slant = CAIRO_FONT_SLANT_NORMAL;
-  cairo_font_weight_t weight = CAIRO_FONT_WEIGHT_NORMAL;
-  PangoStyle pstyle;
-  PangoWeight pweight;
-  
-  
-  if( g_font_desc )
-  {
-	  size = pango_font_description_get_size ( g_font_desc );
-	  size /= PANGO_SCALE;
-	  family = pango_font_description_get_family( g_font_desc );
-	  pstyle =  pango_font_description_get_style ( g_font_desc );
-	  switch( pstyle ) {
-		case PANGO_STYLE_NORMAL: slant=CAIRO_FONT_SLANT_NORMAL; break;
-		case PANGO_STYLE_OBLIQUE: slant=CAIRO_FONT_SLANT_OBLIQUE; break;
-		case PANGO_STYLE_ITALIC: slant=CAIRO_FONT_SLANT_ITALIC; break;
-		default: slant=CAIRO_FONT_SLANT_NORMAL; break;
-	}
-
-	 pweight =  pango_font_description_get_weight ( g_font_desc ) ;
-	 weight =  pweight<= 500?CAIRO_FONT_WEIGHT_NORMAL:CAIRO_FONT_WEIGHT_BOLD;
+  /* ------------------------------------------------------------ */
+  /*               O U T P U T  A N D  C L E A N U P              */
+  /* ------------------------------------------------------------ */
+ 
+  /* write to png */
+  status = cairo_surface_write_to_png(surf, "test_font.png");
+  if (CAIRO_STATUS_SUCCESS != status) {
+    printf("+ error: couldn't write to png\n");
+    exit(EXIT_FAILURE);
   }
-  
-  
-	cr = gdk_cairo_create(widget->window);
+ 
+  cairo_surface_destroy(surf);
+  cairo_destroy(cr);
+ 
+  g_object_unref(layout);
+  g_object_unref(font_map);
+  g_object_unref(context);
+ 
 
-	/* Set surface to translucent color (r, g, b, a) */
-	cairo_set_source_rgb (cr, 0, 0, 0);
-	cairo_paint (cr);
-	cairo_set_source_rgb (cr, 1, 1, 1);
-
-	cairo_move_to(cr, 0, 30);
-	cairo_set_font_size(cr, size);
-	cairo_select_font_face(cr, family, slant, weight);
-	cairo_show_text(cr, plaintext);
-	cairo_destroy(cr);
 
 	return FALSE;
 }
@@ -379,7 +295,7 @@ int main( int   argc,char *argv[] )
    GtkWidget *fontbutton;
    GdkPixbuf *icon;
    GtkWidget *fixed;
-   GtkWidget *dataarea, *dataarea2, *dataarea3;
+   GtkWidget *dataarea, *dataarea2;
    GtkWidget *label = gtk_label_new (LABEL_TEXT);
 
    // showfontlist1();
@@ -393,7 +309,7 @@ int main( int   argc,char *argv[] )
    gtk_window_set_title (GTK_WINDOW (window), "Scala Font Viewer using Pango");
    gtk_window_set_default_size(GTK_WINDOW(window), CANVAS_WIDTH, CANVAS_HEIGHT);
    gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
-   gtk_container_set_border_width(GTK_CONTAINER (window),  6);
+   gtk_container_set_border_width(GTK_CONTAINER (window), 20);
 
    icon = create_pixbuf("scala.png");  
    gtk_window_set_icon(GTK_WINDOW(window), icon);
@@ -401,7 +317,7 @@ int main( int   argc,char *argv[] )
    g_signal_connect (window, "destroy",
    G_CALLBACK (destroy), NULL);
   
-   fontbutton = gtk_font_button_new_with_font("Sans 20");
+   fontbutton = gtk_font_button_new();
    gtk_widget_set_tooltip_text(fontbutton, "Font Button widget. Click to select font!");
  
    g_signal_connect (GTK_OBJECT(fontbutton),
@@ -414,18 +330,13 @@ int main( int   argc,char *argv[] )
 
    dataarea = gtk_drawing_area_new();
    gtk_fixed_put(GTK_FIXED(fixed), dataarea, CANVAS_WIDTH / 2, -10);
-   gtk_widget_set_size_request(dataarea, CANVAS_WIDTH / 2, 100);
+   gtk_widget_set_size_request(dataarea, CANVAS_WIDTH / 2, CANVAS_HEIGHT - 35);
    g_signal_connect(dataarea, "expose-event", G_CALLBACK(on_expose_event), NULL);
 
    dataarea2 = gtk_drawing_area_new();
-   gtk_fixed_put(GTK_FIXED(fixed), dataarea2, 0, OFFSET);
-   gtk_widget_set_size_request(dataarea2, CANVAS_WIDTH, CANVAS_HEIGHT / 2 - OFFSET / 2 - 5 );
+   gtk_fixed_put(GTK_FIXED(fixed), dataarea2, 0, 40);
+   gtk_widget_set_size_request(dataarea2, CANVAS_WIDTH, CANVAS_HEIGHT - 35);
    g_signal_connect(dataarea2, "expose-event", G_CALLBACK(on_expose_event2), NULL);
-
-   dataarea3 = gtk_drawing_area_new();
-   gtk_fixed_put(GTK_FIXED(fixed), dataarea3, 0, CANVAS_HEIGHT / 2 + OFFSET / 2 );
-   gtk_widget_set_size_request(dataarea3, CANVAS_WIDTH, CANVAS_HEIGHT / 2 - OFFSET / 2 - 0.5);
-   g_signal_connect(dataarea3, "expose-event", G_CALLBACK(on_expose_event3), NULL);
    
    
    gtk_container_add(GTK_CONTAINER(window), fixed);
