@@ -278,6 +278,34 @@ gboolean on_expose_event3(GtkWidget *widget,
 	return FALSE;
 }
 
+gboolean on_expose_event4(GtkWidget *widget,
+	GdkEventExpose *event,
+    gpointer data) {
+        
+	cairo_t *cr;
+	PangoLayout *layout;
+
+
+	if( g_font_desc ) {
+		cr = gdk_cairo_create(widget->window);
+		/* Set surface to translucent color (r, g, b, a) */
+		cairo_set_source_rgb (cr, 0, 0, 0);
+		cairo_paint (cr);
+		cairo_set_source_rgb (cr, 1, 1, 1);
+		layout = pango_cairo_create_layout (cr);
+		/* set the width around which pango will wrap */
+		pango_layout_set_width(layout, (CANVAS_WIDTH - OFFSET) * PANGO_SCALE);
+		pango_layout_set_text (layout, plaintext, -1);
+		pango_layout_set_font_description (layout, g_font_desc);
+		pango_cairo_update_layout (cr, layout);
+		pango_cairo_show_layout (cr, layout);
+		
+		g_object_unref (layout);
+	}
+	
+	return FALSE;
+}
+
 gboolean time_handler(GtkWidget *widget) {
     
   if (widget->window == NULL) return FALSE;
@@ -401,6 +429,7 @@ int main( int   argc,char *argv[] )
    g_signal_connect (window, "destroy",
    G_CALLBACK (destroy), NULL);
   
+   g_font_desc = pango_font_description_from_string("Sans 20");
    fontbutton = gtk_font_button_new_with_font("Sans 20");
    gtk_widget_set_tooltip_text(fontbutton, "Font Button widget. Click to select font!");
  
