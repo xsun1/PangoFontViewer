@@ -11,11 +11,11 @@
 
 #define LABEL_TEXT  "Click the button to change the font."
 
-#define USE_MARKUP   1
+#define USE_MARKUP   0
 
 gchar buf[256];
 PangoFontDescription  *g_font_desc = NULL;
-gchar* plaintext  = "Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World AVWABCDEFGHIJKLMNOPQRSTUVWXYX";
+gchar* plaintext  = "AVWA This is a list of answers to questions that are frequently asked by new users to cairo.";
 	
 void destroy( GtkWidget *widget,gpointer   data )
 {
@@ -269,7 +269,7 @@ gboolean on_expose_event3(GtkWidget *widget,
 	cairo_paint (cr);
 	cairo_set_source_rgb (cr, 1, 1, 1);
 
-	cairo_move_to(cr, 0, 30);
+	cairo_move_to(cr, 0, 40);
 	cairo_set_font_size(cr, size);
 	cairo_select_font_face(cr, family, slant, weight);
 	cairo_show_text(cr, plaintext);
