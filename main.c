@@ -16,7 +16,7 @@
 gchar buf[256];
 PangoFontDescription  *g_font_desc = NULL;
 gchar* plaintext  = "AVWA This is a list of answers to questions that are frequently asked by new users to cairo.";
-float bgcolor[] = {0.2, 0.2, 0.2};
+float bgcolor[] = {0.0, 0.0, 0.0};
 float fgcolor[] = {1.0, 1.0, 1.0};
 
 	
@@ -200,7 +200,7 @@ gboolean on_expose_event2(GtkWidget *widget,
 	}
 
 ////////////////////////////////////////////////// Output to GtkWidget ///////////////////////////////////////////////////////
-#if 0	
+#if 1	
 	pixbuf = gdk_pixbuf_new_from_file("test_font.png", &err);
     if(err)
     {
