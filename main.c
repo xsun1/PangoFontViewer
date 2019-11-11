@@ -16,6 +16,9 @@
 gchar buf[256];
 PangoFontDescription  *g_font_desc = NULL;
 gchar* plaintext  = "AVWA This is a list of answers to questions that are frequently asked by new users to cairo.";
+float bgcolor[] = {0.2, 0.2, 0.2};
+float fgcolor[] = {1.0, 1.0, 1.0};
+
 	
 void destroy( GtkWidget *widget,gpointer   data )
 {
@@ -63,6 +66,7 @@ gboolean on_expose_event(GtkWidget *widget,
   return FALSE;
 }
 
+// use pango-ft2 to draw text
 gboolean on_expose_event2(GtkWidget *widget,
     GdkEventExpose *event,   gpointer data) 
 {
@@ -181,7 +185,7 @@ gboolean on_expose_event2(GtkWidget *widget,
 #endif
  
 	/* render */
-	pango_ft2_render_layout(&bmp, layout, 20, 0);
+	pango_ft2_render_layout(&bmp, layout, 0, 0);
 	pango_cairo_update_layout(cr, layout);
  
 	/* ------------------------------------------------------------ */
@@ -196,7 +200,7 @@ gboolean on_expose_event2(GtkWidget *widget,
 	}
 
 ////////////////////////////////////////////////// Output to GtkWidget ///////////////////////////////////////////////////////
-#if 1	
+#if 0	
 	pixbuf = gdk_pixbuf_new_from_file("test_font.png", &err);
     if(err)
     {
@@ -231,6 +235,7 @@ gboolean on_expose_event2(GtkWidget *widget,
 	return FALSE;
 }
 
+// Use simple cairo cairo_show_text to draw  text
 gboolean on_expose_event3(GtkWidget *widget,
     GdkEventExpose *event,
     gpointer data) {
@@ -265,9 +270,9 @@ gboolean on_expose_event3(GtkWidget *widget,
 	cr = gdk_cairo_create(widget->window);
 
 	/* Set surface to translucent color (r, g, b, a) */
-	cairo_set_source_rgb (cr, 0, 0, 0);
+	cairo_set_source_rgb (cr, bgcolor[0], bgcolor[1],  bgcolor[2]);
 	cairo_paint (cr);
-	cairo_set_source_rgb (cr, 1, 1, 1);
+	cairo_set_source_rgb (cr, fgcolor[0], fgcolor[1], fgcolor[2]);
 
 	cairo_move_to(cr, 0, 40);
 	cairo_set_font_size(cr, size);
@@ -278,6 +283,7 @@ gboolean on_expose_event3(GtkWidget *widget,
 	return FALSE;
 }
 
+// use pango-cairo to draw text 
 gboolean on_expose_event4(GtkWidget *widget,
 	GdkEventExpose *event,
     gpointer data) {
@@ -289,10 +295,15 @@ gboolean on_expose_event4(GtkWidget *widget,
 	if( g_font_desc ) {
 		cr = gdk_cairo_create(widget->window);
 		/* Set surface to translucent color (r, g, b, a) */
-		cairo_set_source_rgb (cr, 0, 0, 0);
+		cairo_set_source_rgb (cr, bgcolor[0], bgcolor[1],  bgcolor[2]);
 		cairo_paint (cr);
-		cairo_set_source_rgb (cr, 1, 1, 1);
-		layout = pango_cairo_create_layout (cr);
+		cairo_set_source_rgb (cr, fgcolor[0], fgcolor[1], fgcolor[2]);
+		layout = pango_cairo_create_layout (cr);  // This function is the most convenient way to use Cairo with Pango, however 
+																	//  it is slightly inefficient since it creates a separate PangoContext object for each layout.
+		// Make sure the DPI (resolution) same on both Cairo context and Pango context
+		PangoContext *pCtx = pango_layout_get_context(layout);
+		pango_cairo_context_set_resolution(pCtx, 72);
+		
 		/* set the width around which pango will wrap */
 		pango_layout_set_width(layout, (CANVAS_WIDTH - OFFSET) * PANGO_SCALE);
 		pango_layout_set_text (layout, plaintext, -1);
@@ -454,7 +465,7 @@ int main( int   argc,char *argv[] )
    dataarea3 = gtk_drawing_area_new();
    gtk_fixed_put(GTK_FIXED(fixed), dataarea3, 0, CANVAS_HEIGHT / 2 + OFFSET / 2 );
    gtk_widget_set_size_request(dataarea3, CANVAS_WIDTH, CANVAS_HEIGHT / 2 - OFFSET / 2 - 0.5);
-   g_signal_connect(dataarea3, "expose-event", G_CALLBACK(on_expose_event3), NULL);
+   g_signal_connect(dataarea3, "expose-event", G_CALLBACK(on_expose_event4), NULL);
    
    
    gtk_container_add(GTK_CONTAINER(window), fixed);
