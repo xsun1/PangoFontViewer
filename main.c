@@ -11,21 +11,12 @@
 
 #define LABEL_TEXT  "Click the button to change the font."
 
-#define USE_MARKUP   1
+#define USE_MARKUP   0
+//#define USE_COLOR_BMP
 
 gchar buf[256];
 PangoFontDescription  *g_font_desc = NULL;
-//gchar* plaintext  = "AVWA This is a list of answers to questions that are frequently asked by new users to cairo.ð ⻤ ð¥°";
-gchar* plaintext  = ""
-    "<span foreground=\"blue\" font_family=\"Station\">"
-    "   <b> bold </b>"
-    "   <u> is </u>"
-    "   <i> nice </i>"
-    "</span>"
-    "<tt> hello </tt>"
-    "<span font_family=\"sans\" font_stretch=\"ultracondensed\" letter_spacing=\"500\" font_weight=\"light\"> SANS</span>"
-    "<span foreground=\"#FFCC00\"> colored  😀 ⺁ ⻤ 🥰 🦖</span>"
-    "";
+gchar* plaintext  = "AVWA This is a list of answers to questions that are frequently asked by new users to cairo. 😀 ⺁ ⻤ 🥰 🦖";
 
 float bgcolor[] = {0.0, 0.0, 0.0};
 float fgcolor[] = {1.0, 1.0, 1.0};
@@ -244,7 +235,6 @@ gboolean on_expose_event2(GtkWidget *widget,
 	/* ------------------------------------------------------------ */
 	/*                   I N I T I A L I Z E                        */
 	/* ------------------------------------------------------------ */
-//#define USE_COLOR_BMP
 	/* FT buffer */
 	FT_Bitmap_New(&bmp);
 	bmp.rows = height;
@@ -314,13 +304,20 @@ gboolean on_expose_event2(GtkWidget *widget,
 	/* set the width around which pango will wrap */
 	pango_layout_set_width(layout, (CANVAS_WIDTH - OFFSET) * PANGO_SCALE);
  
- #if USE_MARKUP
+	// This sets the resolution of the device
+	//pango_ft2_font_map_set_resolution(PANGO_FT2_FONT_MAP(font_map), width, height);
+
  	/* create the font description @todo the reference does not tell how/when to free this */
-	font_desc = pango_font_description_from_string("Sans 20");
+	if(g_font_desc)
+		font_desc = g_font_desc;
+	else
+		font_desc = pango_font_description_from_string("Sans 20");
 	pango_layout_set_font_description(layout, font_desc);
 	pango_font_map_load_font(font_map, context, font_desc);
-	pango_font_description_free(font_desc);
+	if(g_font_desc == NULL)
+		pango_font_description_free(font_desc);
 
+ #if USE_MARKUP
 	/* write using the markup feature */
 	const gchar* text = ""
     "<span foreground=\"blue\" font_family=\"Station\">"
@@ -335,23 +332,12 @@ gboolean on_expose_event2(GtkWidget *widget,
  
 //  gchar* plaintext ;
 //  PangoAttrList* attr_list;
-	pango_layout_set_markup(layout, text, -1);
-	
+	pango_layout_set_markup(layout, text, -1);	
 #else
-		/* create the font description @todo the reference does not tell how/when to free this */
-	if(g_font_desc)
-		font_desc = g_font_desc;
-	else
-		font_desc = pango_font_description_from_string("Sans 20");
-	pango_layout_set_font_description(layout, font_desc);
-	pango_font_map_load_font(font_map, context, font_desc);
-	if(g_font_desc == NULL)
-		pango_font_description_free(font_desc);
-
 	pango_layout_set_text(layout, plaintext, -1);
-	
 #endif
- 
+	//pango_layout_context_changed(layout);
+
 	/* render */
 	pango_ft2_render_layout(&bmp, layout, 0, 0);
 	pango_cairo_update_layout(cr, layout);
@@ -361,25 +347,23 @@ gboolean on_expose_event2(GtkWidget *widget,
 	/* ------------------------------------------------------------ */
 
 	//Write to bmp
-	/* 
-	for(int j = 0; j < height; j++)
+#ifdef USE_COLOR_BMP
+	 WriteImage("img2.bmp", bmp.buffer, width, height, 4);
+#else
+	unsigned char *pRawBuffer = (unsigned char *)calloc(width * height, 4);
+	for(int j=0; j<height; j++)
 	{
 		for(int i = 0; i < width; i++)
 		{
-			unsigned char temp[4];
-			p = bmp.buffer + 4 * (i + j * width);
-			temp[0] = p[3];
-			temp[1] = p[2];
-			temp[2] = p[1];
-			temp[3] = p[0];
-			p[0] = temp[0];
-			p[1] = temp[1];
-			p[2] = temp[2];
-			p[3] = temp[3];
+			int k = j * width + i;
+			unsigned char *p = &pRawBuffer[k * 4];
+			p[0]=p[1]=p[2]=bmp.buffer[k];
+			p[3] = 0xFF;
 		}
-	}
-	 WriteImage("img2.bmp", bmp.buffer, width, height, 4);
-	*/
+	} 
+	 
+	WriteImage("img2.bmp", pRawBuffer, width, height, 4);
+#endif
 
 	/* write to png */
 	status = cairo_surface_write_to_png(surf, "test_font.png");
@@ -547,7 +531,7 @@ gboolean on_expose_event5(GtkWidget *widget,
 		pango_cairo_show_layout (cr, layout);
 		
 		// Save to bmp file
-		WriteImage("img3.bmp", buf, width, height, 4);
+		WriteImage("img5.bmp", buf, width, height, 4);
 
 		// copy source surface to dest surface
 		cr2 = gdk_cairo_create (gtk_widget_get_window(widget));
