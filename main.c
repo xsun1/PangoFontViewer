@@ -200,7 +200,7 @@ gboolean on_expose_event(GtkWidget *widget,
 	 weight =  pweight<= 500?CAIRO_FONT_WEIGHT_NORMAL:CAIRO_FONT_WEIGHT_BOLD;
   }
 
-  cr = gdk_cairo_create(widget->window);
+  cr = gdk_cairo_create(gtk_widget_get_window(widget));
 
   cairo_move_to(cr, 0, 30);
   cairo_set_font_size(cr, size);
@@ -382,7 +382,6 @@ gboolean on_expose_event2(GtkWidget *widget,
         return FALSE;
     }
     cr2 = gdk_cairo_create (gtk_widget_get_window(widget));
-    //    cr = gdk_cairo_create (da->window);
     gdk_cairo_set_source_pixbuf(cr2, pixbuf, 0, 0);
     cairo_paint(cr2);
     //    cairo_fill (cr);
@@ -440,7 +439,7 @@ gboolean on_expose_event3(GtkWidget *widget,
   }
   
   
-	cr = gdk_cairo_create(widget->window);
+	cr = gdk_cairo_create(gtk_widget_get_window(widget));
 
 	/* Set surface to translucent color (r, g, b, a) */
 	cairo_set_source_rgb (cr, bgcolor[0], bgcolor[1],  bgcolor[2]);
@@ -466,7 +465,7 @@ gboolean on_expose_event4(GtkWidget *widget,
 
 
 	if( g_font_desc ) {
-		cr = gdk_cairo_create(widget->window);
+		cr = gdk_cairo_create(gtk_widget_get_window(widget));
 		/* Set surface to translucent color (r, g, b, a) */
 		cairo_set_source_rgb (cr, bgcolor[0], bgcolor[1],  bgcolor[2]);
 		cairo_paint (cr);
@@ -510,7 +509,6 @@ gboolean on_expose_event5(GtkWidget *widget,
 	surface = cairo_image_surface_create_for_data(buf, CAIRO_FORMAT_ARGB32, width, height, stride);
 
 	if( g_font_desc ) {
-		cr2 = gdk_cairo_create(widget->window);
 		cr  = cairo_create(surface);
 
 		/* Set surface to translucent color (r, g, b, a) */
@@ -551,7 +549,7 @@ gboolean on_expose_event5(GtkWidget *widget,
 
 gboolean time_handler(GtkWidget *widget) {
     
-  if (widget->window == NULL) return FALSE;
+  if (gtk_widget_get_window(widget) == NULL) return FALSE;
 
   GDateTime *now = g_date_time_new_now_local(); 
   gchar *my_time = g_date_time_format(now, "%H:%M:%S");
