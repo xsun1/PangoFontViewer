@@ -5,8 +5,8 @@
 #include <pango/pangocairo.h>
 #include <pango/pangoft2.h> 
  
-#define CANVAS_WIDTH  800
-#define CANVAS_HEIGHT 600
+#define CANVAS_WIDTH  1600
+#define CANVAS_HEIGHT 1200
 #define OFFSET  45
 #define LABEL_TEXT  "Click the button to change the font."
 
@@ -19,7 +19,7 @@
 
 gchar buf[256];
 PangoFontDescription  *g_font_desc = NULL;
-#if 1
+#if 0
 const gchar* plaintext  =  "AVWA This is a list of answers to questions that are frequently asked by new users to cairo.  😀 ⺁ ⻤ 🥰 🦖"
 	"";
 #else
@@ -660,10 +660,10 @@ int main( int   argc,char *argv[] )
 
   // Create draw area here
    gtk_fixed_put(GTK_FIXED(fixed), fontbutton, 0, 0);
-   gtk_widget_set_size_request(fontbutton, CANVAS_WIDTH / 2.5, 30);
+   gtk_widget_set_size_request(fontbutton, CANVAS_WIDTH / 2.5, 40);
 
    dataarea = gtk_drawing_area_new();
-   gtk_fixed_put(GTK_FIXED(fixed), dataarea, CANVAS_WIDTH / 2, -10);
+   gtk_fixed_put(GTK_FIXED(fixed), dataarea, CANVAS_WIDTH / 2, 0);
    gtk_widget_set_size_request(dataarea, CANVAS_WIDTH / 2, 100);
    g_signal_connect(dataarea, EXPOSE_EVENT_STR, G_CALLBACK(on_expose_event), NULL);
 
