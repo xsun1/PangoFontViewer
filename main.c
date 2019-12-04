@@ -16,7 +16,8 @@
 
 gchar buf[256];
 PangoFontDescription  *g_font_desc = NULL;
-gchar* plaintext  = "AVWA This is a list of answers to questions that are frequently asked by new users to cairo. 😀 ⺁ ⻤ 🥰 🦖";
+const gchar* plaintext  =  "AVWA This is a list of answers to questions that are frequently asked by new users to cairo.  😀 ⺁ ⻤ 🥰 🦖"
+	"";
 
 float bgcolor[] = {0.0, 0.0, 0.0};
 float fgcolor[] = {1.0, 1.0, 1.0};
@@ -565,57 +566,6 @@ gboolean time_handler(GtkWidget *widget) {
   return TRUE;
 }
 
-void showfontlist1()
-{
-	FcPattern *pat;
-	FcFontSet *fs;
-	FcObjectSet *os;
-	FcChar8 *s, *file;
-	FcConfig *config;
-	FcBool result;
-	int i;
-
-	result = FcInit();
-	config = FcConfigGetCurrent();
-	FcConfigSetRescanInterval(config, 0);
-
-	// show the fonts (debugging)
-	pat = FcPatternCreate();
-	os = FcObjectSetBuild (FC_FAMILY, FC_STYLE, FC_LANG, (char *) 0);
-	fs = FcFontList(config, pat, os);
-	printf("Total fonts: %d", fs->nfont);
-	for (i=0; fs && i < fs->nfont; i++) {
-	    FcPattern *font = fs->fonts[i];//FcFontSetFont(fs, i);
-	    FcPatternPrint(font);
-	    s = FcNameUnparse(font);
-	    if (FcPatternGetString(font, FC_FILE, 0, &file) == FcResultMatch) {
-		printf("Filename: %s", file);
-	    }
-	    printf("Font: %s", s);
-	    free(s);
-	}
-	if (fs) FcFontSetDestroy(fs);
-}
-
-void showfontlist2()
-{
-	FcConfig* config = FcInitLoadConfigAndFonts();
-	FcPattern* pat = FcPatternCreate();
-	FcObjectSet* os = FcObjectSetBuild (FC_FAMILY, FC_STYLE, FC_LANG, FC_FILE, (char *) 0);
-	FcFontSet* fs = FcFontList(config, pat, os);
-	printf("Total matching fonts: %d\n", fs->nfont);
-	for (int i=0; fs && i < fs->nfont; ++i) {
-	   FcPattern* font = fs->fonts[i];
-	   FcChar8 *file, *style, *family;
-	   if (FcPatternGetString(font, FC_FILE, 0, &file) == FcResultMatch &&
-	       FcPatternGetString(font, FC_FAMILY, 0, &family) == FcResultMatch &&
-	       FcPatternGetString(font, FC_STYLE, 0, &style) == FcResultMatch)
-	   {
-	      printf("Filename: %s (family %s, style %s)\n", file, family, style);
-	   }
-	}
-	if (fs) FcFontSetDestroy(fs);
-}
 
 GdkPixbuf *create_pixbuf(const gchar * filename) {
     
@@ -649,7 +599,9 @@ int main( int   argc,char *argv[] )
    GdkPixbuf *icon;
    GtkWidget *fixed;
    GtkWidget *dataarea, *dataarea2, *dataarea3;
+#ifdef GTKV2
    GtkWidget *label = gtk_label_new (LABEL_TEXT);
+#endif   
 
    // showfontlist1();
    gtk_init (&argc, &argv);
@@ -674,9 +626,15 @@ int main( int   argc,char *argv[] )
    fontbutton = gtk_font_button_new_with_font("Sans 20");
    gtk_widget_set_tooltip_text(fontbutton, "Font Button widget. Click to select font!");
  
+#ifdef GTKV2	  
    g_signal_connect (GTK_OBJECT(fontbutton),
       "font_set",G_CALLBACK (on_font_changed),
       (gpointer) label);
+#else
+   g_signal_connect (fontbutton,
+      "font_set",G_CALLBACK (on_font_changed),
+	   NULL);
+#endif	   	  
 
   // Create draw area here
    gtk_fixed_put(GTK_FIXED(fixed), fontbutton, 0, 0);
@@ -685,18 +643,28 @@ int main( int   argc,char *argv[] )
    dataarea = gtk_drawing_area_new();
    gtk_fixed_put(GTK_FIXED(fixed), dataarea, CANVAS_WIDTH / 2, -10);
    gtk_widget_set_size_request(dataarea, CANVAS_WIDTH / 2, 100);
+#ifdef GTKV2
    g_signal_connect(dataarea, "expose-event", G_CALLBACK(on_expose_event), NULL);
+#else
+   g_signal_connect(dataarea, "draw", GCallback(on_expose_event), NULL);
+#endif
 
    dataarea2 = gtk_drawing_area_new();
    gtk_fixed_put(GTK_FIXED(fixed), dataarea2, 0, OFFSET);
    gtk_widget_set_size_request(dataarea2, CANVAS_WIDTH, CANVAS_HEIGHT / 2 - OFFSET / 2 - 5 );
+#ifdef GTKV2
    g_signal_connect(dataarea2, "expose-event", G_CALLBACK(on_expose_event2), NULL);
-
+#else
+   g_signal_connect(dataarea2, "draw", GCallback(on_expose_event2), NULL);
+#endif
    dataarea3 = gtk_drawing_area_new();
    gtk_fixed_put(GTK_FIXED(fixed), dataarea3, 0, CANVAS_HEIGHT / 2 + OFFSET / 2 );
    gtk_widget_set_size_request(dataarea3, CANVAS_WIDTH, CANVAS_HEIGHT / 2 - OFFSET / 2 - 0.5);
+#ifdef GTKV2
    g_signal_connect(dataarea3, "expose-event", G_CALLBACK(on_expose_event5), NULL);
-   
+#else
+   g_signal_connect(dataarea3, "draw", GCallback(on_expose_event5), NULL);
+#endif   
    
    gtk_container_add(GTK_CONTAINER(window), fixed);
  

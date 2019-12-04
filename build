@@ -1,7 +1,11 @@
 #!/bin/bash
 # build.sh
 
-gcc main.c -g -o fontviewer `pkg-config --cflags --libs gtk+-2.0` -I/usr/include/fontconfig -lm
+if [ $1 -eq 2 ]
+then
+    gcc main.c -g -o fontviewer -DGTKV2 `pkg-config --cflags --libs gtk+-2.0` -I/usr/include/fontconfig -lm
+else
+    g++ main.c -g -o fontviewer `pkg-config --cflags --libs gtk+-3.0` -I/usr/include/fontconfig -lpangoft2-1.0 -lfreetype
+fi
 
-./fontviewer
 
