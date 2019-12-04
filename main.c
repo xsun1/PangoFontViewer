@@ -670,7 +670,7 @@ int main( int   argc,char *argv[] )
    dataarea2 = gtk_drawing_area_new();
    gtk_fixed_put(GTK_FIXED(fixed), dataarea2, 0, OFFSET);
    gtk_widget_set_size_request(dataarea2, CANVAS_WIDTH, CANVAS_HEIGHT / 2 - OFFSET / 2 - 5 );
-   g_signal_connect(dataarea2, EXPOSE_EVENT_STR, G_CALLBACK(on_expose_event4), NULL);
+   g_signal_connect(dataarea2, EXPOSE_EVENT_STR, G_CALLBACK(on_expose_event2), NULL);
 
    dataarea3 = gtk_drawing_area_new();
    gtk_fixed_put(GTK_FIXED(fixed), dataarea3, 0, CANVAS_HEIGHT / 2 + OFFSET / 2 );
