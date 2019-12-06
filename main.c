@@ -5,12 +5,12 @@
 #include <pango/pangocairo.h>
 #include <pango/pangoft2.h> 
  
-#define CANVAS_WIDTH  1600
-#define CANVAS_HEIGHT 1200
+#define CANVAS_WIDTH  1024
+#define CANVAS_HEIGHT 768
 #define OFFSET  45
 #define LABEL_TEXT  "Click the button to change the font."
 
-#define USE_MARKUP   0
+#define USE_MARKUP  
 //#define USE_COLOR_BMP
 
 #ifdef _MBCS
@@ -19,7 +19,7 @@
 
 gchar buf[256];
 PangoFontDescription  *g_font_desc = NULL;
-#if 0
+#ifndef USE_MARKUP
 const gchar* plaintext  =  "AVWA This is a list of answers to questions that are frequently asked by new users to cairo.  😀 ⺁ ⻤ 🥰 🦖"
 	"";
 #else
@@ -340,22 +340,8 @@ gboolean on_expose_event2(GtkWidget *widget,
 	if(g_font_desc == NULL)
 		pango_font_description_free(font_desc);
 
- #if USE_MARKUP
-	/* write using the markup feature */
-	const gchar* text = ""
-    "<span foreground=\"blue\" font_family=\"Station\">"
-    "   <b> bold </b>"
-    "   <u> is </u>"
-    "   <i> nice </i>"
-    "</span>"
-    "<tt> hello </tt>"
-    "<span font_family=\"sans\" font_stretch=\"ultracondensed\" letter_spacing=\"500\" font_weight=\"light\"> SANS</span>"
-    "<span foreground=\"#FFCC00\"> colored  😀 ⺁ ⻤ 🥰 🦖</span>"
-    "";
- 
-//  gchar* plaintext ;
-//  PangoAttrList* attr_list;
-	pango_layout_set_markup(layout, text, -1);	
+ #ifdef USE_MARKUP
+	pango_layout_set_markup(layout, plaintext, -1);	
 #else
 	pango_layout_set_text(layout, plaintext, -1);
 #endif
@@ -526,7 +512,10 @@ gboolean on_expose_event5(GtkWidget *widget,
 	int stride = 0;
 	int width = CANVAS_WIDTH;
 	int height = CANVAS_HEIGHT - OFFSET;
-
+#if 0
+	PangoFontMap *pMap = pango_cairo_font_map_new_for_font_type(CAIRO_FONT_TYPE_FT);
+	pango_cairo_font_map_set_default(pMap);
+#endif
 	stride = cairo_format_stride_for_width(CAIRO_FORMAT_ARGB32, width);
 	buf = (unsigned char*)calloc(stride * height, 1);
 	surface = cairo_image_surface_create_for_data(buf, CAIRO_FORMAT_ARGB32, width, height, stride);
