@@ -512,10 +512,11 @@ gboolean on_expose_event5(GtkWidget *widget,
 	int stride = 0;
 	int width = CANVAS_WIDTH;
 	int height = CANVAS_HEIGHT - OFFSET;
-#if _MBCS
-	PangoFontMap *pMap = pango_cairo_font_map_new_for_font_type(CAIRO_FONT_TYPE_FT);
+
+	// Have to convert returned PangoFontMap * to PangoCairoFontMap *, otherwise it will not compile on Linux
+	PangoCairoFontMap *pMap = (PangoCairoFontMap *)pango_cairo_font_map_new_for_font_type(CAIRO_FONT_TYPE_FT);
 	pango_cairo_font_map_set_default(pMap);
-#endif
+
 	stride = cairo_format_stride_for_width(CAIRO_FORMAT_ARGB32, width);
 	buf = (unsigned char*)calloc(stride * height, 1);
 	surface = cairo_image_surface_create_for_data(buf, CAIRO_FORMAT_ARGB32, width, height, stride);
