@@ -10,7 +10,7 @@
 #define OFFSET  45
 #define LABEL_TEXT  "Click the button to change the font."
 
-#define USE_MARKUP  
+//#define USE_MARKUP  
 //#define USE_COLOR_BMP
 
 #ifdef _MBCS
@@ -24,7 +24,7 @@ const gchar* plaintext  =  "AVWA This is a list of answers to questions that are
 	"";
 #else
 const gchar* plaintext =  ""
-    "<span foreground=\"blue\" font_family=\"Station\">"
+    "<span foreground=\"blue\" font_family=\"sans\">"
     "   <b> bold </b>"
     "   <u> is </u>"
     "   <i> nice </i>"
@@ -334,7 +334,7 @@ gboolean on_expose_event2(GtkWidget *widget,
 	if(g_font_desc)
 		font_desc = g_font_desc;
 	else
-		font_desc = pango_font_description_from_string("Sans 20");
+		font_desc = pango_font_description_from_string("Sans 48");
 	pango_layout_set_font_description(layout, font_desc);
 	pango_font_map_load_font(font_map, context, font_desc);
 	if(g_font_desc == NULL)
@@ -512,7 +512,7 @@ gboolean on_expose_event5(GtkWidget *widget,
 	int stride = 0;
 	int width = CANVAS_WIDTH;
 	int height = CANVAS_HEIGHT - OFFSET;
-#if 0
+#if _MBCS
 	PangoFontMap *pMap = pango_cairo_font_map_new_for_font_type(CAIRO_FONT_TYPE_FT);
 	pango_cairo_font_map_set_default(pMap);
 #endif
@@ -633,8 +633,8 @@ int main( int   argc,char *argv[] )
    g_signal_connect (window, "destroy",
    G_CALLBACK (destroy), NULL);
   
-   g_font_desc = pango_font_description_from_string("Sans 20");
-   fontbutton = gtk_font_button_new_with_font("Sans 20");
+   g_font_desc = pango_font_description_from_string("Sans 48");
+   fontbutton = gtk_font_button_new_with_font("Sans 48");
    gtk_widget_set_tooltip_text(fontbutton, "Font Button widget. Click to select font!");
  
 #ifdef GTKV2	  
